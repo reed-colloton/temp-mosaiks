@@ -158,6 +158,7 @@ mosaiks_temperature_project/
 ├── prepare_data.py        # Data preparation script
 ├── train.py               # Model training script
 ├── evaluate.py            # Model comparison script
+├── predict_temp.py        # Predict temperature from address
 ├── data/
 │   ├── mosaiks_1deg_global.csv  # Raw MOSAIKS features (902MB, git-ignored)
 │   ├── weather_stations.csv     # NOAA temperature data
@@ -170,26 +171,36 @@ mosaiks_temperature_project/
 
 ## Usage
 
-### 1. Prepare Data
+### 1. Setup
+Install dependencies:
+```bash
+pip install -r requirements.txt
+```
+
+### 2. Prepare Data
+Filter the global dataset to the US and merge with weather station data:
 ```bash
 python prepare_data.py
 ```
-Filters global MOSAIKS grid to US and merges with weather station temperatures.
 
-### 2. Train Model
+### 3. Train Model
+Train the ridge regression model:
 ```bash
 python train.py
 ```
-Trains ridge regression with cross-validated regularization. Outputs:
-- Model performance metrics
-- `test_predictions.csv` with actual vs predicted temperatures
-- `model.joblib` saved model
 
-### 3. Compare Models
+### 4. Evaluate
+Compare different feature sets:
 ```bash
 python evaluate.py
 ```
-Compares all feature combinations and saves `model_comparison.csv`.
+
+### 5. Predict from Address
+Predict temperature for any US street address using the trained model:
+```bash
+python predict_temp.py
+```
+*Note: Requires a Google Maps API Key.*
 
 ## Requirements
 
