@@ -126,10 +126,11 @@ def main():
             # Scale features
             features_scaled = scaler.transform(features)
 
-            # Predict
-            pred_temp = model.predict(features_scaled)[0]
+            # Predict (model outputs Celsius)
+            pred_temp_c = model.predict(features_scaled)[0]
+            pred_temp_f = pred_temp_c * 9/5 + 32
 
-            print(f"\nPredicted Average Temperature: {pred_temp:.2f}°F")
+            print(f"\nPredicted Average Temperature: {pred_temp_f:.1f}°F ({pred_temp_c:.1f}°C)")
 
         except Exception as e:
             print(f"Error: {e}")

@@ -37,6 +37,14 @@ us_grid_1deg.csv (606 cells with temp data)
         ▼ Predictions
 ```
 
+## Evaluation Metrics
+
+| Metric | Description |
+|--------|-------------|
+| **R²** (R-squared) | Coefficient of determination. Measures how well the model explains variance in temperature. R²=1.0 is perfect prediction; R²=0 means the model is no better than predicting the mean. |
+| **RMSE** (Root Mean Square Error) | Square root of the average squared prediction error. Penalizes large errors more heavily. Reported in both °C and °F. |
+| **MAE** (Mean Absolute Error) | Average absolute difference between predicted and actual temperature. More interpretable than RMSE - represents the typical error magnitude. Reported in both °C and °F. |
+
 ## Results
 
 ### Model Comparison (1° Grid, 606 cells)
@@ -151,22 +159,19 @@ Top feature correlations with temperature (county-level):
 ## Files
 
 ```
-mosaiks_temperature_project/
+temp-mosaiks/
 ├── README.md              # This file
 ├── requirements.txt       # Python dependencies
 ├── .gitignore             # Git ignore (excludes large data)
-├── prepare_data.py        # Data preparation script
-├── train.py               # Model training script
-├── evaluate.py            # Model comparison script
-├── predict_temp.py        # Predict temperature from address
-├── data/
-│   ├── mosaiks_1deg_global.csv  # Raw MOSAIKS features (902MB, git-ignored)
-│   ├── weather_stations.csv     # NOAA temperature data
-│   └── us_grid_1deg.csv         # Prepared US dataset
-└── output/
-    ├── model.joblib             # Trained model (generated)
-    ├── test_predictions.csv     # Model predictions (generated)
-    └── model_comparison.csv     # Evaluation results (generated)
+└── src/
+    ├── train.py               # Model training script
+    ├── evaluate.py            # Model comparison script
+    ├── predict.py             # Predict temperature from address
+    ├── us_grid_025deg.csv     # Prepared US dataset (0.25° grid)
+    └── output/
+        ├── model.joblib           # Trained model (generated)
+        ├── test_predictions.csv   # Model predictions (generated)
+        └── model_comparison.csv   # Evaluation results (generated)
 ```
 
 ## Usage
@@ -177,28 +182,22 @@ Install dependencies:
 pip install -r requirements.txt
 ```
 
-### 2. Prepare Data
-Filter the global dataset to the US and merge with weather station data:
-```bash
-python prepare_data.py
-```
-
-### 3. Train Model
+### 2. Train Model
 Train the ridge regression model:
 ```bash
-python train.py
+python src/train.py
 ```
 
-### 4. Evaluate
+### 3. Evaluate
 Compare different feature sets:
 ```bash
-python evaluate.py
+python src/evaluate.py
 ```
 
-### 5. Predict from Address
+### 4. Predict from Address
 Predict temperature for any US street address using the trained model:
 ```bash
-python predict_temp.py
+python src/predict.py
 ```
 *Note: Requires a Google Maps API Key.*
 
@@ -213,28 +212,31 @@ joblib
 
 ## Data Format
 
-### Input: data/us_grid_1deg.csv
+### Input: src/us_grid_025deg.csv
 | Column | Description |
 |--------|-------------|
-| lat | Grid cell latitude (center, e.g., 35.5) |
-| lon | Grid cell longitude (center, e.g., -105.5) |
+| lat | Grid cell latitude (center, e.g., 35.625) |
+| lon | Grid cell longitude (center, e.g., -105.375) |
 | continent | Continent code |
 | X_0 - X_3999 | 4,000 MOSAIKS random convolutional features |
 | avg_temp_c | Mean yearly temperature (°C) |
 | num_stations | Weather stations in grid cell |
 
-### Output: output/test_predictions.csv
+### Output: src/output/test_predictions.csv
 | Column | Description |
 |--------|-------------|
 | lat | Grid cell latitude |
 | lon | Grid cell longitude |
-| actual_temp_c | Observed temperature |
-| predicted_temp_c | Model prediction |
-| error_c | Prediction error (actual - predicted) |
+| actual_temp_c | Observed temperature (°C) |
+| predicted_temp_c | Model prediction (°C) |
+| error_c | Prediction error in °C |
+| actual_temp_f | Observed temperature (°F) |
+| predicted_temp_f | Model prediction (°F) |
+| error_f | Prediction error in °F |
 
 ## Limitations
 
-- **1° resolution**: ~100km grid cells average out local variation
+- **0.25° resolution**: ~25km grid cells still average out some local variation
 - **Station coverage**: Some grid cells have few weather stations
 - **Temporal mismatch**: 2019 imagery vs multi-year temperature averages
 
