@@ -40,7 +40,7 @@ def main():
     # Prepare features
     feature_cols = [f'X_{i}' for i in range(4000)]
     X = data[feature_cols].values
-    y = data['avg_temp_f'].values
+    y = data['avg_temp_c'].values  # Use Celsius for training
     lat = data['lat'].values
     lon = data['lon'].values
 
@@ -137,11 +137,13 @@ def main():
     print("MODEL COMPARISON RESULTS")
     print("=" * 60)
 
-    print(f"\n{'Model':<25} {'R2':>10} {'RMSE':>10} {'MAE':>10}")
-    print("-" * 55)
+    print(f"\n{'Model':<25} {'R2':>10} {'RMSE (C)':>10} {'RMSE (F)':>10} {'MAE (C)':>10} {'MAE (F)':>10}")
+    print("-" * 75)
 
     for r in results:
-        print(f"{r['model']:<25} {r['r2']:>10.4f} {r['rmse']:>9.2f}F {r['mae']:>9.2f}F")
+        rmse_f = r['rmse'] * 9/5  # Convert C to F scale
+        mae_f = r['mae'] * 9/5
+        print(f"{r['model']:<25} {r['r2']:>10.4f} {r['rmse']:>10.2f} {rmse_f:>10.2f} {r['mae']:>10.2f} {mae_f:>10.2f}")
 
     # Summary
     baseline_r2 = results[0]['r2']

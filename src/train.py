@@ -39,10 +39,15 @@ def prepare_features(data):
     """Extract features, target, and coordinates."""
     feature_cols = [f'X_{i}' for i in range(4000)]
     X = data[feature_cols].values
-    y = data['avg_temp_f'].values
+    y = data['avg_temp_c'].values  # Use Celsius for training
     lat = data['lat'].values
     lon = data['lon'].values
     return X, y, lat, lon
+
+
+def c_to_f(celsius):
+    """Convert Celsius to Fahrenheit."""
+    return celsius * 9/5 + 32
 
 
 def train_test_split_data(X, y, lat, lon, test_size=0.2, random_state=42):
@@ -110,7 +115,7 @@ def main():
 
     print(f"\nFeatures: {X.shape[1]}")
     print(f"Samples: {X.shape[0]}")
-    print(f"Temperature range: {y.min():.1f}F to {y.max():.1f}F")
+    print(f"Temperature range: {y.min():.1f}C ({c_to_f(y.min()):.1f}F) to {y.max():.1f}C ({c_to_f(y.max()):.1f}F)")
 
     # Split data
     (X_train, X_test, y_train, y_test,
@@ -139,11 +144,13 @@ def main():
     print("RESULTS")
     print("=" * 60)
 
-    print(f"\n{'Model':<25} {'R2':>10} {'RMSE':>10} {'MAE':>10}")
-    print("-" * 55)
+    print(f"\n{'Model':<25} {'R2':>10} {'RMSE (C)':>10} {'RMSE (F)':>10} {'MAE (C)':>10} {'MAE (F)':>10}")
+    print("-" * 75)
 
     for m in [baseline_metrics, train_metrics, test_metrics]:
-        print(f"{m['name']:<25} {m['r2']:>10.4f} {m['rmse']:>9.2f}F {m['mae']:>9.2f}F")
+        rmse_f = m['rmse'] * 9/5  # Convert C to F scale
+        mae_f = m['mae'] * 9/5
+        print(f"{m['name']:<25} {m['r2']:>10.4f} {m['rmse']:>10.2f} {rmse_f:>10.2f} {m['mae']:>10.2f} {mae_f:>10.2f}")
 
     improvement = test_metrics['r2'] - baseline_metrics['r2']
     print(f"\nMOSAIKS improvement over baseline: +{improvement*100:.1f}% R2")
@@ -152,9 +159,12 @@ def main():
     predictions_df = pd.DataFrame({
         'lat': lat_test,
         'lon': lon_test,
-        'actual_temp_f': y_test,
-        'predicted_temp_f': y_pred_test,
-        'error_f': y_test - y_pred_test
+        'actual_temp_c': y_test,
+        'predicted_temp_c': y_pred_test,
+        'error_c': y_test - y_pred_test,
+        'actual_temp_f': c_to_f(y_test),
+        'predicted_temp_f': c_to_f(y_pred_test),
+        'error_f': (y_test - y_pred_test) * 9/5
     })
     pred_file = OUTPUT_DIR / "test_predictions.csv"
     predictions_df.to_csv(pred_file, index=False)
