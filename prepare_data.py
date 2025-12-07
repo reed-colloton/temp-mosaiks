@@ -10,6 +10,14 @@ This script:
 
 import pandas as pd
 import numpy as np
+from pathlib import Path
+
+# Paths
+DATA_DIR = Path("data")
+RAW_MOSAIKS = DATA_DIR / "mosaiks_1deg_global.csv"
+RAW_WEATHER = DATA_DIR / "weather_stations.csv"
+OUTPUT_FILE = DATA_DIR / "us_grid_1deg.csv"
+
 
 def main():
     print("=" * 60)
@@ -18,7 +26,7 @@ def main():
 
     # Load coarsened 1x1 degree MOSAIKS grid
     print("\n1. Loading MOSAIKS 1-degree grid...")
-    grid = pd.read_csv("mosaiks_1deg_global.csv")
+    grid = pd.read_csv(RAW_MOSAIKS)
     print(f"   Global grid cells: {len(grid):,}")
 
     # Filter to continental US
@@ -31,7 +39,7 @@ def main():
 
     # Load weather stations
     print("\n3. Loading weather stations...")
-    weather = pd.read_csv("weather_stations.csv")
+    weather = pd.read_csv(RAW_WEATHER)
     print(f"   Total stations: {len(weather)}")
 
     # Filter by days recorded
@@ -61,9 +69,8 @@ def main():
     print(f"   Final dataset: {len(data)} grid cells")
 
     # Save
-    output_file = "us_grid_1deg.csv"
-    data.to_csv(output_file, index=False)
-    print(f"\n   Saved to {output_file}")
+    data.to_csv(OUTPUT_FILE, index=False)
+    print(f"\n   Saved to {OUTPUT_FILE}")
     print(f"   Shape: {data.shape}")
     print(f"   Temperature range: {data['avg_temp_c'].min():.1f}C to {data['avg_temp_c'].max():.1f}C")
 

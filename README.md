@@ -39,22 +39,29 @@ us_grid_1deg.csv (606 cells with temp data)
 
 ## Results
 
-### Model Comparison
+### Model Comparison (1° Grid, 606 cells)
 
 | Model              | R²     | RMSE    | MAE     |
 |--------------------|--------|---------|---------|
-| Latitude only      | 0.6869 | 3.28°C  | 2.58°C  |
-| Lat + Lon          | 0.7127 | 3.15°C  | 2.47°C  |
+| Latitude only      | 0.6869 | 3.28°C  | 2.50°C  |
+| Lat + Lon          | 0.7127 | 3.15°C  | 2.30°C  |
 | **MOSAIKS only**   | **0.8492** | **2.28°C** | **1.70°C** |
-| MOSAIKS + Lat      | 0.8467 | 2.30°C  | 1.73°C  |
-| MOSAIKS + Lat + Lon| 0.8402 | 2.35°C  | 1.76°C  |
+| MOSAIKS + Lat      | 0.8467 | 2.30°C  | 1.65°C  |
+| MOSAIKS + Lat + Lon| 0.8402 | 2.35°C  | 1.70°C  |
+
+### Model Comparison (0.25° Grid, 1,709 cells)
+
+| Model              | R²     | RMSE    | MAE     |
+|--------------------|--------|---------|---------|
+| Latitude only      | 0.5609 | 3.91°C  | 3.14°C  |
+| **MOSAIKS only**   | **0.8457** | **2.32°C** | **1.84°C** |
 
 ### Key Findings
 
-1. **MOSAIKS features alone achieve R² = 0.85** - no need for explicit geographic coordinates
-2. **+16% improvement over latitude baseline** - satellite features capture more than just north-south variation
+1. **MOSAIKS features alone achieve R² ≈ 0.85** at both resolutions - no explicit coordinates needed
+2. **+16-28% improvement over latitude** - larger gains at finer resolution where local variation matters more
 3. **Adding coordinates doesn't help** - MOSAIKS already encodes geographic patterns from imagery
-4. **Resolution matters**: County-level aggregation destroyed the signal (R² ≈ 0), but 1° grid preserves it
+4. **Resolution matters**: County-level aggregation destroyed the signal (R² ≈ 0), but grid-based aggregation works
 
 ### Why It Works
 
@@ -126,13 +133,16 @@ Top feature correlations with temperature (county-level):
 
 ### Resolution Comparison
 
-| Resolution | Avg Area | Sample Size | MOSAIKS R² |
-|------------|----------|-------------|------------|
-| Native (1km²) | 1 km² | ~50M cells | ~0.90* |
-| 1° Grid | ~10,000 km² | 606 cells | **0.85** |
-| County (ADM2) | ~3,000 km² | 806 counties | -0.02 |
+| Resolution | Avg Area | Sample Size | Lat R² | MOSAIKS R² | Improvement |
+|------------|----------|-------------|--------|------------|-------------|
+| Native (1km²) | 1 km² | ~50M cells | ~0.5 | ~0.90* | ~+40%* |
+| **0.25° Grid** | ~625 km² | 1,709 cells | 0.56 | **0.85** | **+28.5%** |
+| 1° Grid | ~10,000 km² | 606 cells | 0.69 | 0.85 | +16.2% |
+| County (ADM2) | ~3,000 km² | 806 counties | 0.69 | -0.02 | -71% |
 
 *Expected based on MOSAIKS paper; not tested due to quota limits.
+
+**Key insight**: At finer resolutions, latitude explains less variance (more local variation), but MOSAIKS maintains ~85% R². This means MOSAIKS captures local climate patterns that simple coordinates miss.
 
 ### Key Insight
 
@@ -143,14 +153,19 @@ Top feature correlations with temperature (county-level):
 ```
 mosaiks_temperature_project/
 ├── README.md              # This file
+├── requirements.txt       # Python dependencies
+├── .gitignore             # Git ignore (excludes large data)
 ├── prepare_data.py        # Data preparation script
 ├── train.py               # Model training script
 ├── evaluate.py            # Model comparison script
-├── mosaiks_1deg_global.csv # Raw MOSAIKS features (global)
-├── weather_stations.csv   # NOAA temperature data
-├── us_grid_1deg.csv       # Prepared US dataset
-├── test_predictions.csv   # Model predictions (generated)
-└── model_comparison.csv   # Evaluation results (generated)
+├── data/
+│   ├── mosaiks_1deg_global.csv  # Raw MOSAIKS features (902MB, git-ignored)
+│   ├── weather_stations.csv     # NOAA temperature data
+│   └── us_grid_1deg.csv         # Prepared US dataset
+└── output/
+    ├── model.joblib             # Trained model (generated)
+    ├── test_predictions.csv     # Model predictions (generated)
+    └── model_comparison.csv     # Evaluation results (generated)
 ```
 
 ## Usage
@@ -187,7 +202,7 @@ joblib
 
 ## Data Format
 
-### Input: us_grid_1deg.csv
+### Input: data/us_grid_1deg.csv
 | Column | Description |
 |--------|-------------|
 | lat | Grid cell latitude (center, e.g., 35.5) |
@@ -197,7 +212,7 @@ joblib
 | avg_temp_c | Mean yearly temperature (°C) |
 | num_stations | Weather stations in grid cell |
 
-### Output: test_predictions.csv
+### Output: output/test_predictions.csv
 | Column | Description |
 |--------|-------------|
 | lat | Grid cell latitude |
@@ -216,5 +231,3 @@ joblib
 
 - Rolf et al. (2021). "A generalizable and accessible approach to machine learning with global satellite imagery." *Nature Communications*.
 - MOSAIKS Project: https://mosaiks.org
-# temp-mosaiks
-# temp-mosaiks

@@ -6,11 +6,13 @@ Usage:
 
 Outputs:
     - Prints model performance metrics
-    - Saves test predictions to test_predictions.csv
+    - Saves test predictions to output/test_predictions.csv
+    - Saves model to output/model.joblib
 """
 
 import pandas as pd
 import numpy as np
+from pathlib import Path
 from sklearn.model_selection import train_test_split
 from sklearn.linear_model import RidgeCV, LinearRegression
 from sklearn.preprocessing import StandardScaler
@@ -19,8 +21,13 @@ import joblib
 import warnings
 warnings.filterwarnings('ignore')
 
+# Paths
+DATA_DIR = Path("data")
+OUTPUT_DIR = Path("output")
+INPUT_FILE = DATA_DIR / "us_grid_1deg.csv"
 
-def load_data(filepath="us_grid_1deg.csv"):
+
+def load_data(filepath=INPUT_FILE):
     """Load the prepared dataset."""
     print("Loading data...")
     data = pd.read_csv(filepath)
@@ -94,6 +101,9 @@ def main():
     print("MOSAIKS Temperature Prediction - Training")
     print("=" * 60)
 
+    # Create output directory if needed
+    OUTPUT_DIR.mkdir(exist_ok=True)
+
     # Load data
     data = load_data()
     X, y, lat, lon = prepare_features(data)
@@ -146,12 +156,14 @@ def main():
         'predicted_temp_c': y_pred_test,
         'error_c': y_test - y_pred_test
     })
-    predictions_df.to_csv("test_predictions.csv", index=False)
-    print("\nSaved test predictions to test_predictions.csv")
+    pred_file = OUTPUT_DIR / "test_predictions.csv"
+    predictions_df.to_csv(pred_file, index=False)
+    print(f"\nSaved test predictions to {pred_file}")
 
     # Save model
-    joblib.dump({'model': model, 'scaler': scaler}, 'model.joblib')
-    print("Saved model to model.joblib")
+    model_file = OUTPUT_DIR / "model.joblib"
+    joblib.dump({'model': model, 'scaler': scaler}, model_file)
+    print(f"Saved model to {model_file}")
 
     return model, scaler, test_metrics
 

@@ -11,6 +11,7 @@ Compares:
 
 import pandas as pd
 import numpy as np
+from pathlib import Path
 from sklearn.model_selection import train_test_split
 from sklearn.linear_model import RidgeCV, LinearRegression
 from sklearn.preprocessing import StandardScaler
@@ -18,14 +19,22 @@ from sklearn.metrics import r2_score, mean_squared_error, mean_absolute_error
 import warnings
 warnings.filterwarnings('ignore')
 
+# Paths
+DATA_DIR = Path("data")
+OUTPUT_DIR = Path("output")
+INPUT_FILE = DATA_DIR / "us_grid_1deg.csv"
+
 
 def main():
     print("=" * 60)
     print("MOSAIKS Temperature Prediction - Model Comparison")
     print("=" * 60)
 
+    # Create output directory if needed
+    OUTPUT_DIR.mkdir(exist_ok=True)
+
     # Load data
-    data = pd.read_csv("us_grid_1deg.csv")
+    data = pd.read_csv(INPUT_FILE)
     print(f"\nDataset: {len(data)} grid cells")
 
     # Prepare features
@@ -149,8 +158,9 @@ def main():
 
     # Save results
     results_df = pd.DataFrame(results)
-    results_df.to_csv("model_comparison.csv", index=False)
-    print("\nSaved results to model_comparison.csv")
+    output_file = OUTPUT_DIR / "model_comparison.csv"
+    results_df.to_csv(output_file, index=False)
+    print(f"\nSaved results to {output_file}")
 
     return results
 

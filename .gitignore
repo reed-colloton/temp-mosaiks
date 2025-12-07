@@ -1,3 +1,5 @@
-mosaiks_1deg_global.csv
 __pycache__/
 .DS_Store
+.gitignore
+data/*
+!data/weather_stations.csv
