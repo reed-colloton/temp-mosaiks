@@ -99,12 +99,30 @@ us_grid_025deg.csv (1,709 US grid cells with features + temp)
 | MOSAIKS + Lat      | 0.8438 | 2.34     | 4.21     | 1.82    | 3.27    |
 | MOSAIKS + Lat + Lon| 0.8477 | 2.31     | 4.16     | 1.81    | 3.25    |
 
+![Actual vs Predicted Temperature](src/output/scatter_actual_vs_predicted.png)
+*Figure 1: Model predictions vs actual temperature for 342 test grid cells. Points colored by absolute error.*
+
+![Prediction Errors Map](src/output/map_prediction_errors.png)
+*Figure 2: Spatial distribution of prediction errors across the US test set. Red = overpredicted, Blue = underpredicted.*
+
 ### Key Findings
 
 1. **MOSAIKS features alone achieve R² = 0.85** - no explicit coordinates needed
 2. **+28.5% improvement over latitude baseline** - MOSAIKS captures local variation that coordinates miss
 3. **Adding coordinates doesn't help** - MOSAIKS already encodes geographic patterns from imagery
 4. **Resolution matters**: In exploratory analysis, county-level aggregation appeared to destroy the signal, likely because administrative boundaries span heterogeneous climate zones
+
+### Spatial Generalization
+
+To assess how well the model extrapolates to unseen regions (vs. interpolating between nearby training points), we evaluated using spatial cross-validation:
+
+| Split Strategy | R² | RMSE (°C) | Interpretation |
+|----------------|-----|-----------|----------------|
+| Random 80/20   | 0.85 | 2.32 | Interpolation performance |
+| East/West holdout | -0.45 | 6.31 | Regional extrapolation |
+| Spatial block CV | -1.57 | 4.30 | Generalization to unseen blocks |
+
+**Key insight:** Performance drops dramatically under spatial CV (R² becomes negative, meaning worse than predicting the mean). This reveals that the strong random-split performance is largely due to **spatial interpolation**—the model learns patterns from nearby training cells rather than generalizing broadly. This is important context for interpreting the R² = 0.85 result and for understanding where the model will and won't work well.
 
 ### Why It Works
 
@@ -176,12 +194,17 @@ temp-mosaiks/
 │   └── global_grid_1deg.csv   # Global MOSAIKS features (1° grid, for predictions)
 └── src/
     ├── train.py               # Model training script
-    ├── evaluate.py            # Model comparison script
-    ├── predict.py             # Predict temperature from address
+    ├── evaluate.py            # Model comparison + spatial CV
+    ├── predict.py             # Predict temperature from address or coordinates
+    ├── visualize.py           # Generate figures
+    ├── utils.py               # Shared utility functions
     └── output/
-        ├── model.joblib           # Trained model (generated)
-        ├── test_predictions.csv   # Model predictions (generated)
-        └── model_comparison.csv   # Evaluation results (generated)
+        ├── model.joblib                    # Trained model (generated)
+        ├── test_predictions.csv            # Model predictions (generated)
+        ├── model_comparison.csv            # Evaluation results (generated)
+        ├── spatial_cv_results.csv          # Spatial CV results (generated)
+        ├── scatter_actual_vs_predicted.png # Scatter plot figure (generated)
+        └── map_prediction_errors.png       # Error map figure (generated)
 ```
 
 ## Usage
@@ -204,12 +227,22 @@ Compare different feature sets:
 python src/evaluate.py
 ```
 
-### 4. Predict from Address
-Predict temperature for any US street address using the trained model:
+### 4. Predict from Address or Coordinates
+Predict temperature for any location using the trained model:
 ```bash
 python src/predict.py
 ```
-*Note: Requires a Google Maps API Key. The prediction uses the 1° global grid (`global_grid_1deg.csv`) while the model was trained on 0.25° US data, so predictions represent regional climate values (~111 km resolution) rather than local microclimate.*
+You can enter either:
+- A street address (requires Google Maps API Key)
+- Direct coordinates, e.g., `39.7392, -104.9903` (no API key needed)
+
+*Note: The prediction uses the 1° global grid while the model was trained on 0.25° US data, so predictions represent regional climate values (~111 km resolution).*
+
+### 5. Generate Visualizations
+Create scatter plots and maps:
+```bash
+python src/visualize.py
+```
 
 ## Requirements
 
@@ -220,6 +253,7 @@ scikit-learn
 joblib
 requests
 python-dotenv
+matplotlib
 ```
 
 ## Data Format
@@ -296,6 +330,10 @@ Potential extensions of this project include:
 3. **Uncertainty quantification**: Add prediction intervals to communicate confidence in temperature estimates
 4. **Integration with climate models**: Use MOSAIKS predictions to downscale coarse climate model outputs
 5. **Operational deployment**: Build a web service that returns temperature estimates for any coordinate, enabling researchers to query predictions programmatically
+
+## Authors
+
+[Reed Colloton](https://reedcolloton.com/about) and Nolan Hofle, undergraduate students at CU Boulder majoring in Computer Science.
 
 ## References
 
