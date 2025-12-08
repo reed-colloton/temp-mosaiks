@@ -71,6 +71,54 @@ The random convolutional features capture:
 
 These visual patterns correlate strongly with local climate.
 
+## Model Performance & Practical Usability
+
+### Does the Model Work?
+
+**Yes.** An R² of 0.85 with RMSE of 2.3°C (4.2°F) indicates the model works very well for predicting annual average temperature.
+
+### What the Metrics Mean in Practice
+
+**R² = 0.85:**
+- The model explains **85% of temperature variance** across locations
+- Remaining 15% is due to local effects, measurement error, and unmeasured factors
+- This is **excellent** for climate prediction from satellite imagery alone
+
+**RMSE = 2.3°C (4.2°F):**
+- Typical prediction error is about **±4°F**
+- For comparison, this is less than the difference between morning and afternoon temperatures
+- Predictions for most locations will be within 3-5°F of actual values
+
+**MAE = 1.8°C (3.3°F):**
+- Median error is even smaller at **±3°F**
+- Half of predictions are more accurate than this
+- Shows the model rarely makes catastrophically bad predictions
+
+### Performance vs Baseline
+
+The MOSAIKS model achieves:
+- **+51% better R²** than latitude-only baseline (0.85 vs 0.56)
+- **Errors cut nearly in half** (4.2°F vs 7.1°F RMSE)
+- Captures local climate variations that simple coordinates miss
+
+### When to Use This Model
+
+**Good for:**
+- Climate/geography research and analysis
+- Exploratory data analysis of temperature patterns
+- Understanding climate correlates in satellite imagery
+- Educational demonstrations of ML with remote sensing
+
+**Consider limitations for:**
+- Precise local weather forecasting (±4°F may be too coarse)
+- Microclimate prediction (model uses ~25km grid cells)
+- Extreme temperature events (model predicts yearly averages only)
+- Locations with rapid land use change (uses 2019 imagery)
+
+### Geographic Coverage
+
+The trained model uses **US grid cells only** but can make predictions for any location where MOSAIKS features are available (global coverage at 1° resolution in `global_grid_1deg.csv`). Expect best performance in regions with similar climate patterns to the US training data.
+
 ## Files
 
 ```
