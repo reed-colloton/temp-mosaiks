@@ -130,11 +130,11 @@ To assess how well the model extrapolates to unseen regions (vs. interpolating b
 
 #### Interpretation
 
-The model is **not overfit** for its intended use case (US temperature interpolation). The R² = 0.85 reflects genuine predictive skill—the model learns real patterns in vegetation, terrain, and land cover that correlate with temperature. Train and test R² are nearly identical (0.88 vs 0.85), indicating no memorization of noise.
+Train and test R² are nearly identical (0.88 vs 0.85) under the random split, suggesting the ridge model is **not heavily overfitting** and is capturing real structure in the data rather than memorizing noise. For the intended use case—interpolating temperature across the US where training data is distributed throughout the domain—this is exactly what we want to see.
 
-The poor spatial CV performance reflects **limited transferability**, not overfitting. MOSAIKS features capture spatially localized patterns: Arizona deserts look different from Oregon forests, so patterns learned in one region don't transfer to the other. This is expected behavior for spatial interpolation models and a common characteristic of spatial ML that often goes unreported.
+The poor spatial CV performance reflects **distribution shift and limited transferability across regions**, rather than classical overfitting. The East/West holdout is a deliberately extreme stress test: we pretend we have zero training data in half the country. When the model is evaluated on a climate and land-cover regime it never saw during training, it fails—Arizona deserts look different from Oregon forests, so patterns learned in one region don't transfer to the other. This kind of drop under spatial CV is common in spatial ML: models that appear strong under random splits often degrade when evaluated on geographically held-out regions.
 
-**For US-based applications** (filling gaps in weather networks, dense prediction across the continental US), the R² = 0.85 is valid and the model works well. The spatial CV results simply confirm the model should not be used for extrapolation to entirely new geographic regions.
+**For US-based interpolation applications** (e.g., filling gaps where there are nearby stations), the R² = 0.85 from the random split is a meaningful measure of performance. In realistic US applications, training data are spread across the domain, so most prediction locations have relatively nearby training points. The spatial CV result is still important: it warns that the model should not be trusted for **strong extrapolation** into regions that are very different from the training data, and that accuracy will depend on local station density and how similar the target region is to what the model saw in training.
 
 ### Why It Works
 
