@@ -1,4 +1,4 @@
-Predicting average yearly temperature from satellite imagery features using the MOSAIKS (Multi-task Observation using Satellite Imagery & Kitchen Sinks) approach.
+**Note:** This project predicts **annual average temperature** (yearly mean), not daily weather, seasonal variation, or extreme events.
 
 ## Overview
 
@@ -42,7 +42,7 @@ The key insight is that these random features capture enough spatial variation i
 ### Data Sources
 
 - **MOSAIKS Features**: Pre-computed 0.25°×0.25° grid features from [mosaiks.org](https://mosaiks.org)
-- **Temperature**: NOAA weather station yearly averages (stations with >100 days recorded)
+- **Temperature**: NOAA weather station annual averages, 2019 (stations with >100 days recorded)
 
 ### Dataset Scope
 
@@ -55,7 +55,7 @@ The key insight is that these random features capture enough spatial variation i
 | **Geographic coverage** | Continental United States |
 | **Spatial resolution** | 0.25° × 0.25° (~25 km × 25 km at mid-latitudes) |
 | **Imagery source** | Planet Labs satellite imagery (2019) |
-| **Temperature source** | NOAA weather stations (multi-year averages) |
+| **Temperature source** | NOAA weather stations (2019 annual averages) |
 
 **Example data rows:**
 
@@ -104,7 +104,7 @@ us_grid_025deg.csv (1,709 US grid cells with features + temp)
 1. **MOSAIKS features alone achieve R² = 0.85** - no explicit coordinates needed
 2. **+28.5% improvement over latitude baseline** - MOSAIKS captures local variation that coordinates miss
 3. **Adding coordinates doesn't help** - MOSAIKS already encodes geographic patterns from imagery
-4. **Resolution matters**: County-level aggregation destroyed the signal (R² ≈ 0), but grid-based aggregation works
+4. **Resolution matters**: In exploratory analysis, county-level aggregation appeared to destroy the signal, likely because administrative boundaries span heterogeneous climate zones
 
 ### Why It Works
 
@@ -171,12 +171,13 @@ temp-mosaiks/
 ├── README.md              # This file
 ├── requirements.txt       # Python dependencies
 ├── .gitignore             # Git ignore (excludes large data)
+├── data/
+│   ├── us_grid_025deg.csv     # Training data (0.25° grid with temp labels)
+│   └── global_grid_1deg.csv   # Global MOSAIKS features (1° grid, for predictions)
 └── src/
     ├── train.py               # Model training script
     ├── evaluate.py            # Model comparison script
     ├── predict.py             # Predict temperature from address
-    ├── us_grid_025deg.csv     # Training data (0.25° grid with temp labels)
-    ├── global_grid_1deg.csv   # Full global MOSAIKS features (1° grid, for predictions)
     └── output/
         ├── model.joblib           # Trained model (generated)
         ├── test_predictions.csv   # Model predictions (generated)
@@ -208,7 +209,7 @@ Predict temperature for any US street address using the trained model:
 ```bash
 python src/predict.py
 ```
-*Note: Requires a Google Maps API Key.*
+*Note: Requires a Google Maps API Key. The prediction uses the 1° global grid (`global_grid_1deg.csv`) while the model was trained on 0.25° US data, so predictions represent regional climate values (~111 km resolution) rather than local microclimate.*
 
 ## Requirements
 
@@ -223,7 +224,7 @@ python-dotenv
 
 ## Data Format
 
-### Input: src/us_grid_025deg.csv
+### Input: data/us_grid_025deg.csv
 | Column | Description |
 |--------|-------------|
 | lat | Grid cell latitude (center, e.g., 35.625) |
@@ -233,7 +234,7 @@ python-dotenv
 | avg_temp_c | Mean yearly temperature (°C) |
 | num_stations | Weather stations in grid cell |
 
-### Output: src/output/test_predictions.csv
+### Output: src/output/test_predictions.csv (generated)
 | Column | Description |
 |--------|-------------|
 | lat | Grid cell latitude |
@@ -249,7 +250,7 @@ python-dotenv
 
 - **0.25° resolution**: ~25km grid cells still average out some local variation
 - **Station coverage**: Some grid cells have few weather stations
-- **Temporal mismatch**: 2019 imagery vs multi-year temperature averages
+- **Temporal alignment**: Both imagery and temperature data are from 2019
 
 ## Discussion
 
@@ -259,7 +260,9 @@ The strong performance of MOSAIKS features (R² = 0.85) demonstrates that random
 
 This suggests the random filters are detecting visual signatures of climate zones: vegetation density and type (tropical vs temperate vs arid), urban heat island effects, snow/ice coverage, water body proximity, and elevation-correlated landscape features. The model succeeds not by "knowing" where locations are, but by recognizing what they look like.
 
-The failure of county-level aggregation (R² ≈ 0) versus success of grid-based aggregation (R² = 0.85) reveals an important finding: **administrative boundaries destroy spatial coherence**. Counties vary enormously in size and span multiple climate zones, whereas uniform grid cells preserve the local spatial relationships that MOSAIKS features capture.
+In exploratory analysis, county-level aggregation appeared to destroy the signal (R² ≈ 0), while grid-based aggregation succeeded (R² = 0.85). This suggests **administrative boundaries may disrupt spatial coherence**—counties vary enormously in size and can span multiple climate zones, whereas uniform grid cells preserve the local spatial relationships that MOSAIKS features capture.
+
+**Note on contributions:** This project does not propose a new algorithm. We contribute a curated US temperature dataset with MOSAIKS features, demonstrate strong baseline performance (R² = 0.85), and validate MOSAIKS features for climate applications.
 
 ### Impact on the Field
 

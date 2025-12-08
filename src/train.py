@@ -3,6 +3,7 @@ Train ridge regression model to predict temperature from MOSAIKS features.
 
 Usage:
     python train.py
+    python train.py --test-size 0.3 --seed 123
 
 Outputs:
     - Prints model performance metrics
@@ -10,16 +11,18 @@ Outputs:
     - Saves model to output/model.joblib
 """
 
+import argparse
 import pandas as pd
 import numpy as np
 from pathlib import Path
 from sklearn.model_selection import train_test_split
 from sklearn.linear_model import RidgeCV, LinearRegression
 from sklearn.preprocessing import StandardScaler
-from sklearn.metrics import r2_score, mean_squared_error, mean_absolute_error
 import joblib
 import warnings
 warnings.filterwarnings('ignore')
+
+from utils import c_to_f, calculate_metrics, print_metrics_header, print_metrics_row
 
 # Paths
 SRC_DIR = Path(__file__).parent
@@ -46,32 +49,15 @@ def prepare_features(data):
     return X, y, lat, lon
 
 
-def c_to_f(celsius):
-    """Convert Celsius to Fahrenheit."""
-    return celsius * 9/5 + 32
-
-
 def train_test_split_data(X, y, lat, lon, test_size=0.2, random_state=42):
-    """Split data into train and test sets."""
-    X_train, X_test, y_train, y_test = train_test_split(
-        X, y, test_size=test_size, random_state=random_state
-    )
-    lat_train, lat_test = train_test_split(
-        lat, test_size=test_size, random_state=random_state
-    )
-    lon_train, lon_test = train_test_split(
-        lon, test_size=test_size, random_state=random_state
-    )
-    return (X_train, X_test, y_train, y_test,
-            lat_train, lat_test, lon_train, lon_test)
+    """Split data into train and test sets using index-based splitting."""
+    indices = np.arange(len(X))
+    train_idx, test_idx = train_test_split(indices, test_size=test_size, random_state=random_state)
 
-
-def evaluate_model(y_true, y_pred, name="Model"):
-    """Calculate and print evaluation metrics."""
-    r2 = r2_score(y_true, y_pred)
-    rmse = np.sqrt(mean_squared_error(y_true, y_pred))
-    mae = mean_absolute_error(y_true, y_pred)
-    return {'name': name, 'r2': r2, 'rmse': rmse, 'mae': mae}
+    return (X[train_idx], X[test_idx],
+            y[train_idx], y[test_idx],
+            lat[train_idx], lat[test_idx],
+            lon[train_idx], lon[test_idx])
 
 
 def train_baseline(lat_train, lat_test, y_train, y_test):
@@ -79,7 +65,9 @@ def train_baseline(lat_train, lat_test, y_train, y_test):
     model = LinearRegression()
     model.fit(lat_train.reshape(-1, 1), y_train)
     y_pred = model.predict(lat_test.reshape(-1, 1))
-    return evaluate_model(y_test, y_pred, "Latitude Baseline")
+    metrics = calculate_metrics(y_test, y_pred)
+    metrics['name'] = "Latitude Baseline"
+    return metrics
 
 
 def train_mosaiks(X_train, X_test, y_train, y_test):
@@ -102,16 +90,20 @@ def train_mosaiks(X_train, X_test, y_train, y_test):
     return model, scaler, y_pred_train, y_pred_test
 
 
-def main():
+def main(test_size=0.2, random_state=42, data_path=None, output_dir=None):
     print("=" * 60)
     print("MOSAIKS Temperature Prediction - Training")
     print("=" * 60)
 
+    # Use provided paths or defaults
+    input_file = Path(data_path) if data_path else INPUT_FILE
+    out_dir = Path(output_dir) if output_dir else OUTPUT_DIR
+
     # Create output directory if needed
-    OUTPUT_DIR.mkdir(exist_ok=True)
+    out_dir.mkdir(exist_ok=True)
 
     # Load data
-    data = load_data()
+    data = load_data(input_file)
     X, y, lat, lon = prepare_features(data)
 
     print(f"\nFeatures: {X.shape[1]}")
@@ -120,7 +112,9 @@ def main():
 
     # Split data
     (X_train, X_test, y_train, y_test,
-     lat_train, lat_test, lon_train, lon_test) = train_test_split_data(X, y, lat, lon)
+     lat_train, lat_test, lon_train, lon_test) = train_test_split_data(
+         X, y, lat, lon, test_size=test_size, random_state=random_state
+     )
 
     print(f"\nTrain set: {len(X_train)} samples")
     print(f"Test set: {len(X_test)} samples")
@@ -137,21 +131,20 @@ def main():
         X_train, X_test, y_train, y_test
     )
 
-    train_metrics = evaluate_model(y_train, y_pred_train, "MOSAIKS (Train)")
-    test_metrics = evaluate_model(y_test, y_pred_test, "MOSAIKS (Test)")
+    train_metrics = calculate_metrics(y_train, y_pred_train)
+    train_metrics['name'] = "MOSAIKS (Train)"
+    test_metrics = calculate_metrics(y_test, y_pred_test)
+    test_metrics['name'] = "MOSAIKS (Test)"
 
     # Print results
     print("\n" + "=" * 60)
     print("RESULTS")
     print("=" * 60)
+    print()
 
-    print(f"\n{'Model':<25} {'R2':>10} {'RMSE (C)':>10} {'RMSE (F)':>10} {'MAE (C)':>10} {'MAE (F)':>10}")
-    print("-" * 75)
-
+    print_metrics_header()
     for m in [baseline_metrics, train_metrics, test_metrics]:
-        rmse_f = m['rmse'] * 9/5  # Convert C to F scale
-        mae_f = m['mae'] * 9/5
-        print(f"{m['name']:<25} {m['r2']:>10.4f} {m['rmse']:>10.2f} {rmse_f:>10.2f} {m['mae']:>10.2f} {mae_f:>10.2f}")
+        print_metrics_row(m['name'], m['r2'], m['rmse'], m['mae'])
 
     improvement = test_metrics['r2'] - baseline_metrics['r2']
     print(f"\nMOSAIKS improvement over baseline: +{improvement*100:.1f}% R2")
@@ -167,17 +160,39 @@ def main():
         'predicted_temp_f': c_to_f(y_pred_test),
         'error_f': (y_test - y_pred_test) * 9/5
     })
-    pred_file = OUTPUT_DIR / "test_predictions.csv"
+    pred_file = out_dir / "test_predictions.csv"
     predictions_df.to_csv(pred_file, index=False)
     print(f"\nSaved test predictions to {pred_file}")
 
     # Save model
-    model_file = OUTPUT_DIR / "model.joblib"
+    model_file = out_dir / "model.joblib"
     joblib.dump({'model': model, 'scaler': scaler}, model_file)
     print(f"Saved model to {model_file}")
 
     return model, scaler, test_metrics
 
 
+def parse_args():
+    """Parse command line arguments."""
+    parser = argparse.ArgumentParser(
+        description='Train MOSAIKS temperature prediction model'
+    )
+    parser.add_argument('--test-size', type=float, default=0.2,
+                        help='Fraction of data to use for testing (default: 0.2)')
+    parser.add_argument('--seed', type=int, default=42,
+                        help='Random seed for reproducibility (default: 42)')
+    parser.add_argument('--data-path', type=str, default=None,
+                        help='Path to input CSV (default: data/us_grid_025deg.csv)')
+    parser.add_argument('--output-dir', type=str, default=None,
+                        help='Output directory (default: src/output)')
+    return parser.parse_args()
+
+
 if __name__ == "__main__":
-    main()
+    args = parse_args()
+    main(
+        test_size=args.test_size,
+        random_state=args.seed,
+        data_path=args.data_path,
+        output_dir=args.output_dir
+    )
