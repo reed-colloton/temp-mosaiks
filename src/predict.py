@@ -11,7 +11,7 @@ load_dotenv()
 
 # Constants
 SRC_DIR = Path(__file__).parent
-GRID_FILE = SRC_DIR / "us_grid_025deg.csv"
+GRID_FILE = SRC_DIR / "global_grid_1deg.csv"  # Global 1° grid for predictions
 MODEL_FILE = SRC_DIR / "output" / "model.joblib"
 
 def get_lat_lon(address, api_key):
@@ -36,20 +36,14 @@ def get_lat_lon(address, api_key):
     return location['lat'], location['lng']
 
 def find_nearest_grid_cell(lat, lon, grid_df):
-    """Find the nearest grid cell in the dataframe."""
-    # Grid centers are at X.5
-    # Formula: round(coord - 0.5) + 0.5
-    target_lat = np.round(lat - 0.5) + 0.5
-    target_lon = np.round(lon - 0.5) + 0.5
+    """Find the nearest available grid cell in the dataframe."""
+    # Calculate distance to all grid cells (simple Euclidean approx)
+    distances = np.sqrt((grid_df['lat'] - lat)**2 + (grid_df['lon'] - lon)**2)
+    nearest_idx = distances.idxmin()
+    nearest_cell = grid_df.loc[nearest_idx]
+    distance_deg = distances[nearest_idx]
 
-    # Find matching row
-    match = grid_df[(np.isclose(grid_df['lat'], target_lat)) &
-                    (np.isclose(grid_df['lon'], target_lon))]
-
-    if len(match) == 0:
-        return None, target_lat, target_lon
-
-    return match.iloc[0], target_lat, target_lon
+    return nearest_cell, nearest_cell['lat'], nearest_cell['lon'], distance_deg
 
 def main():
     print("=" * 60)
@@ -110,14 +104,11 @@ def main():
             print(f"Coordinates: {lat:.4f}, {lon:.4f}")
 
             print("Finding nearest grid cell...")
-            cell, grid_lat, grid_lon = find_nearest_grid_cell(lat, lon, grid_df)
+            cell, grid_lat, grid_lon, distance_deg = find_nearest_grid_cell(lat, lon, grid_df)
 
-            if cell is None:
-                print(f"Error: No data found for grid cell centered at ({grid_lat}, {grid_lon}).")
-                print("The location might be outside the US or the training data coverage.")
-                continue
-
-            print(f"Using grid cell centered at: {grid_lat}, {grid_lon}")
+            # Convert degrees to approximate km (1 degree ≈ 111 km)
+            distance_km = distance_deg * 111
+            print(f"Using grid cell at: ({grid_lat}, {grid_lon}) - {distance_km:.0f} km away")
 
             # Extract features
             feature_cols = [f'X_{i}' for i in range(4000)]

@@ -4,3 +4,4 @@ __pycache__/
 data/*
 !data/weather_stations.csv
 .env
+src/global_grid_1deg.csv

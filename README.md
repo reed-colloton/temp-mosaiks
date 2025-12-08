@@ -82,7 +82,8 @@ temp-mosaiks/
     ├── train.py               # Model training script
     ├── evaluate.py            # Model comparison script
     ├── predict.py             # Predict temperature from address
-    ├── us_grid_025deg.csv     # Prepared US dataset (0.25° grid)
+    ├── us_grid_025deg.csv     # Training data (0.25° grid with temp labels)
+    ├── global_grid_1deg.csv   # Full global MOSAIKS features (1° grid, for predictions)
     └── output/
         ├── model.joblib           # Trained model (generated)
         ├── test_predictions.csv   # Model predictions (generated)
