@@ -1,3 +1,7 @@
+---
+title: MOSAIKS Temperature Prediction
+---
+
 # MOSAIKS Temperature Prediction
 
 Predicting average yearly temperature from satellite imagery features using the MOSAIKS (Multi-task Observation using Satellite Imagery & Kitchen Sinks) approach.
