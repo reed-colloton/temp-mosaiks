@@ -1,5 +1,5 @@
 import os
-import sys
+import re
 import requests
 import pandas as pd
 import numpy as np
@@ -37,29 +37,58 @@ def get_lat_lon(address, api_key):
     formatted_address = data['results'][0]['formatted_address']
     return location['lat'], location['lng'], formatted_address
 
-def find_nearest_grid_cell(lat, lon, grid_df):
-    """Find the nearest available grid cell in the dataframe."""
-    # Calculate distance to all grid cells (simple Euclidean approx)
-    distances = np.sqrt((grid_df['lat'] - lat)**2 + (grid_df['lon'] - lon)**2)
-    nearest_idx = distances.idxmin()
-    nearest_cell = grid_df.loc[nearest_idx]
-    distance_deg = distances[nearest_idx]
+def haversine_distance(lat1, lon1, lat2, lon2):
+    """Calculate great-circle distance in km using haversine formula."""
+    R = 6371  # Earth radius in km
 
-    return nearest_cell, nearest_cell['lat'], nearest_cell['lon'], distance_deg
+    lat1_rad = np.radians(lat1)
+    lat2_rad = np.radians(lat2)
+    dlat = np.radians(lat2 - lat1)
+    dlon = np.radians(lon2 - lon1)
+
+    a = np.sin(dlat/2)**2 + np.cos(lat1_rad) * np.cos(lat2_rad) * np.sin(dlon/2)**2
+    c = 2 * np.arcsin(np.sqrt(a))
+
+    return R * c
+
+
+def find_nearest_grid_cell(lat, lon, grid_df):
+    """Find the nearest available grid cell in the dataframe using haversine distance."""
+    distances_km = haversine_distance(lat, lon, grid_df['lat'].values, grid_df['lon'].values)
+    nearest_idx = np.argmin(distances_km)
+    nearest_cell = grid_df.iloc[nearest_idx]
+    distance_km = distances_km[nearest_idx]
+
+    return nearest_cell, nearest_cell['lat'], nearest_cell['lon'], distance_km
+
+
+def parse_coordinates(input_str):
+    """
+    Try to parse input as coordinates (lat, lon).
+    Returns (lat, lon) tuple if valid, None otherwise.
+    """
+    # Pattern: optional minus, digits, optional decimal, comma, same pattern
+    coord_pattern = r'^(-?\d+\.?\d*)\s*,\s*(-?\d+\.?\d*)$'
+    match = re.match(coord_pattern, input_str.strip())
+    if match:
+        lat = float(match.group(1))
+        lon = float(match.group(2))
+        # Basic validation
+        if -90 <= lat <= 90 and -180 <= lon <= 180:
+            return lat, lon
+    return None
 
 def main():
     print("=" * 60)
     print("MOSAIKS Temperature Predictor")
     print("=" * 60)
 
-    # Get API Key
+    # Get API Key (optional - only needed for address geocoding)
     api_key = os.environ.get("GOOGLE_MAPS_API_KEY")
     if not api_key:
-        print("Note: You can set GOOGLE_MAPS_API_KEY environment variable to avoid typing it.")
-        api_key = input("Enter your Google Maps API Key: ").strip()
-        if not api_key:
-            print("Error: API Key is required.")
-            return
+        print("\nNote: No GOOGLE_MAPS_API_KEY found.")
+        print("You can enter coordinates directly (e.g., '39.7392, -104.9903')")
+        print("or provide an API key to geocode street addresses.")
 
     # Load Model
     if not MODEL_FILE.exists():
@@ -95,19 +124,29 @@ def main():
 
     while True:
         print("\n" + "-" * 40)
-        address = input("Enter a street address (or 'q' to quit): ").strip()
-        if address.lower() == 'q':
+        user_input = input("Enter address or coordinates (lat, lon), or 'q' to quit: ").strip()
+        if user_input.lower() == 'q':
             break
 
         try:
-            lat, lon, formatted_address = get_lat_lon(address, api_key)
-            print(f"\nLocation: {formatted_address}")
-            print(f"Coordinates: {lat:.4f}, {lon:.4f}")
+            # Check if input is coordinates
+            coords = parse_coordinates(user_input)
+            if coords:
+                lat, lon = coords
+                formatted_address = f"Coordinates: {lat}, {lon}"
+                print(f"\nLocation: {formatted_address}")
+            else:
+                # Try geocoding as address
+                if not api_key:
+                    api_key = input("Enter Google Maps API Key for address lookup: ").strip()
+                    if not api_key:
+                        print("Error: API key required for address lookup. Use coordinates instead.")
+                        continue
+                lat, lon, formatted_address = get_lat_lon(user_input, api_key)
+                print(f"\nLocation: {formatted_address}")
+                print(f"Coordinates: {lat:.4f}, {lon:.4f}")
 
-            cell, grid_lat, grid_lon, distance_deg = find_nearest_grid_cell(lat, lon, grid_df)
-
-            # Convert degrees to approximate km (1 degree ≈ 111 km)
-            distance_km = distance_deg * 111
+            cell, grid_lat, grid_lon, distance_km = find_nearest_grid_cell(lat, lon, grid_df)
             print(f"Using grid cell at: ({grid_lat}, {grid_lon}) - {distance_km:.0f} km away")
 
             # Extract features

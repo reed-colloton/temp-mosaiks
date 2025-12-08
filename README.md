@@ -1,5 +1,3 @@
-**Note:** This project predicts **annual average temperature** (yearly mean), not daily weather, seasonal variation, or extreme events.
-
 ## Overview
 
 This project demonstrates how MOSAIKS random convolutional features extracted from satellite imagery can predict ground-level temperature with high accuracy (R² = 0.85), outperforming a latitude-only baseline by 28.5 percentage points.
@@ -27,6 +25,8 @@ MOSAIKS provides a fundamentally different approach by computing **task-agnostic
 4. **Scalability**: Adding new prediction tasks requires only new labels, not new feature extraction
 
 This work validates that MOSAIKS features capture sufficient climate-relevant signal to predict temperature with high accuracy, supporting their use for climate research in data-sparse regions.
+
+**Note:** This project predicts **annual average temperature** (yearly mean), not daily weather, seasonal variation, or extreme events.
 
 ## Method
 
