@@ -5,3 +5,4 @@ data/*
 !data/weather_stations.csv
 .env
 src/global_grid_1deg.csv
+src/coarsened_global_dense_grid_decimal_place=0 4.csv

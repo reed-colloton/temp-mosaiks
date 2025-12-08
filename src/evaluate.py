@@ -21,8 +21,9 @@ warnings.filterwarnings('ignore')
 
 # Paths
 SRC_DIR = Path(__file__).parent
+DATA_DIR = SRC_DIR.parent / "data"
 OUTPUT_DIR = SRC_DIR / "output"
-INPUT_FILE = SRC_DIR / "us_grid_025deg.csv"
+INPUT_FILE = DATA_DIR / "us_grid_025deg.csv"
 
 
 def main():

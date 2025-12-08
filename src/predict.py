@@ -11,7 +11,8 @@ load_dotenv()
 
 # Constants
 SRC_DIR = Path(__file__).parent
-GRID_FILE = SRC_DIR / "global_grid_1deg.csv"  # Global 1° grid for predictions
+DATA_DIR = SRC_DIR.parent / "data"
+GRID_FILE = DATA_DIR / "global_grid_1deg.csv"  # Global 1° grid for predictions
 MODEL_FILE = SRC_DIR / "output" / "model.joblib"
 
 def get_lat_lon(address, api_key):
@@ -33,7 +34,8 @@ def get_lat_lon(address, api_key):
         raise Exception("No results found for this address.")
 
     location = data['results'][0]['geometry']['location']
-    return location['lat'], location['lng']
+    formatted_address = data['results'][0]['formatted_address']
+    return location['lat'], location['lng'], formatted_address
 
 def find_nearest_grid_cell(lat, lon, grid_df):
     """Find the nearest available grid cell in the dataframe."""
@@ -85,7 +87,6 @@ def main():
         print(f"Error: Grid file not found at {GRID_FILE}")
         return
 
-    print("Loading grid data...")
     try:
         grid_df = pd.read_csv(GRID_FILE)
     except Exception as e:
@@ -99,11 +100,10 @@ def main():
             break
 
         try:
-            print(f"Geocoding '{address}'...")
-            lat, lon = get_lat_lon(address, api_key)
+            lat, lon, formatted_address = get_lat_lon(address, api_key)
+            print(f"\nLocation: {formatted_address}")
             print(f"Coordinates: {lat:.4f}, {lon:.4f}")
 
-            print("Finding nearest grid cell...")
             cell, grid_lat, grid_lon, distance_deg = find_nearest_grid_cell(lat, lon, grid_df)
 
             # Convert degrees to approximate km (1 degree ≈ 111 km)
