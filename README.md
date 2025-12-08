@@ -128,13 +128,13 @@ To assess how well the model extrapolates to unseen regions (vs. interpolating b
 - **Random split (R² = 0.85):** Test points are geographically close to training points. The model "borrows" information from nearby cells—this is **interpolation** (filling gaps between known points).
 - **Spatial CV (R² negative):** When entire regions are held out, the model must **extrapolate** to areas it's never seen. Negative R² means predictions are worse than simply guessing the mean temperature.
 
-**Is the model overfit?** Not in the traditional sense. The model isn't memorizing noise—it's learning real spatial patterns. The issue is that:
-1. MOSAIKS features encode local visual patterns (vegetation, terrain, urbanization) that correlate with temperature
-2. These patterns are **spatially autocorrelated**—nearby locations look similar and have similar temperatures
-3. When test cells are near training cells, the model leverages this similarity effectively
-4. But when extrapolating to entirely new regions with different terrain/vegetation types, those learned patterns don't transfer
+#### Interpretation
 
-**Bottom line:** The R² = 0.85 is real and useful for **interpolation tasks** within the training domain, but it would be misleading to claim the model generalizes to arbitrary new regions. This is a common issue in spatial ML that often goes unreported—exposing it here demonstrates scientific rigor.
+The model is **not overfit** for its intended use case (US temperature interpolation). The R² = 0.85 reflects genuine predictive skill—the model learns real patterns in vegetation, terrain, and land cover that correlate with temperature. Train and test R² are nearly identical (0.88 vs 0.85), indicating no memorization of noise.
+
+The poor spatial CV performance reflects **limited transferability**, not overfitting. MOSAIKS features capture spatially localized patterns: Arizona deserts look different from Oregon forests, so patterns learned in one region don't transfer to the other. This is expected behavior for spatial interpolation models and a common characteristic of spatial ML that often goes unreported.
+
+**For US-based applications** (filling gaps in weather networks, dense prediction across the continental US), the R² = 0.85 is valid and the model works well. The spatial CV results simply confirm the model should not be used for extrapolation to entirely new geographic regions.
 
 ### Why It Works
 
