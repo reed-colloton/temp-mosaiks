@@ -345,10 +345,6 @@ Potential extensions of this project include:
 4. **Integration with climate models**: Use MOSAIKS predictions to downscale coarse climate model outputs
 5. **Operational deployment**: Build a web service that returns temperature estimates for any coordinate, enabling researchers to query predictions programmatically
 
-## Authors
-
-[Reed Colloton](https://reedcolloton.com/about) and [Nolan Hofle](https://www.linkedin.com/in/nolan-hofle-4176ba347/), undergraduate students at CU Boulder majoring in Computer Science.
-
 ## References
 
 - Rolf et al. (2021). ["A generalizable and accessible approach to machine learning with global satellite imagery."](https://doi.org/10.1038/s41467-021-24638-z) *Nature Communications*, 12, 4392.
