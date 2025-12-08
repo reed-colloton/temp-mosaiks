@@ -122,7 +122,19 @@ To assess how well the model extrapolates to unseen regions (vs. interpolating b
 | East/West holdout | -0.45 | 6.31 | Regional extrapolation |
 | Spatial block CV | -1.57 | 4.30 | Generalization to unseen blocks |
 
-**Key insight:** Performance drops dramatically under spatial CV (R² becomes negative, meaning worse than predicting the mean). This reveals that the strong random-split performance is largely due to **spatial interpolation**—the model learns patterns from nearby training cells rather than generalizing broadly. This is important context for interpreting the R² = 0.85 result and for understanding where the model will and won't work well.
+#### What This Means
+
+**Interpolation vs. Extrapolation:**
+- **Random split (R² = 0.85):** Test points are geographically close to training points. The model "borrows" information from nearby cells—this is **interpolation** (filling gaps between known points).
+- **Spatial CV (R² negative):** When entire regions are held out, the model must **extrapolate** to areas it's never seen. Negative R² means predictions are worse than simply guessing the mean temperature.
+
+**Is the model overfit?** Not in the traditional sense. The model isn't memorizing noise—it's learning real spatial patterns. The issue is that:
+1. MOSAIKS features encode local visual patterns (vegetation, terrain, urbanization) that correlate with temperature
+2. These patterns are **spatially autocorrelated**—nearby locations look similar and have similar temperatures
+3. When test cells are near training cells, the model leverages this similarity effectively
+4. But when extrapolating to entirely new regions with different terrain/vegetation types, those learned patterns don't transfer
+
+**Bottom line:** The R² = 0.85 is real and useful for **interpolation tasks** within the training domain, but it would be misleading to claim the model generalizes to arbitrary new regions. This is a common issue in spatial ML that often goes unreported—exposing it here demonstrates scientific rigor.
 
 ### Why It Works
 
@@ -138,14 +150,14 @@ These visual patterns correlate strongly with local climate.
 
 ### Does the Model Work?
 
-**Yes.** An R² of 0.85 with RMSE of 2.3°C (4.2°F) indicates the model works very well for predicting annual average temperature.
+**Yes, for interpolation tasks.** An R² of 0.85 with RMSE of 2.3°C (4.2°F) indicates the model works very well for predicting annual average temperature—when test locations are near training locations. For extrapolation to entirely new regions, performance degrades significantly (see Spatial Generalization above).
 
 ### What the Metrics Mean in Practice
 
-**R² = 0.85:**
-- The model explains **85% of temperature variance** across locations
+**R² = 0.85 (interpolation):**
+- The model explains **85% of temperature variance** when test locations are near training locations
+- This reflects interpolation performance, not generalization to new regions
 - Remaining 15% is due to local effects, measurement error, and unmeasured factors
-- This is **excellent** for climate prediction from satellite imagery alone
 
 **RMSE = 2.3°C (4.2°F):**
 - Typical prediction error is about **±4°F**
@@ -166,21 +178,23 @@ The MOSAIKS model achieves:
 
 ### When to Use This Model
 
-**Good for:**
-- Climate/geography research and analysis
-- Exploratory data analysis of temperature patterns
-- Understanding climate correlates in satellite imagery
-- Educational demonstrations of ML with remote sensing
+**Works well for (interpolation):**
+- Filling gaps in a weather station network within the US
+- Predicting temperature for US locations with nearby training data
+- Climate/geography research within the training domain
+- Understanding what satellite imagery patterns correlate with temperature
+- Educational demonstrations of spatial ML and its limitations
 
-**Consider limitations for:**
+**Does not work well for (extrapolation):**
+- Predicting temperature in entirely new regions (e.g., Africa, Asia)
+- Locations far from any training data
 - Precise local weather forecasting (±4°F may be too coarse)
 - Microclimate prediction (model uses ~25km grid cells)
 - Extreme temperature events (model predicts yearly averages only)
-- Locations with rapid land use change (uses 2019 imagery)
 
 ### Geographic Coverage
 
-The trained model uses **US grid cells only** but can make predictions for any location where MOSAIKS features are available (global coverage at 1° resolution in `global_grid_1deg.csv`). Expect best performance in regions with similar climate patterns to the US training data.
+The trained model uses **US grid cells only**. While predictions can technically be made for any location with MOSAIKS features (global coverage at 1° resolution), the spatial CV results show that **extrapolation to new regions performs poorly**. The model is best suited for dense prediction within or near the US training domain, not for global temperature mapping.
 
 ## Files
 
