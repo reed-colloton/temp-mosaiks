@@ -6,6 +6,30 @@ Predicting average yearly temperature from satellite imagery features using the 
 
 This project demonstrates how MOSAIKS random convolutional features extracted from satellite imagery can predict ground-level temperature with high accuracy (R² = 0.85), outperforming a latitude-only baseline by 28.5 percentage points.
 
+## Problem Space
+
+Climate and temperature monitoring traditionally relies on weather station networks, which are unevenly distributed globally—dense in wealthy regions, sparse in developing countries and remote areas. This creates significant gaps in our understanding of local climate patterns, particularly in regions most vulnerable to climate change.
+
+**Existing approaches and their limitations:**
+
+| Approach | Limitation |
+|----------|------------|
+| **Weather station interpolation** | Sparse coverage in rural/developing areas; expensive to maintain |
+| **Satellite thermal imagery** | Measures land surface temp (not air temp); cloud interference |
+| **Climate models (GCMs)** | Coarse resolution (~100km); computationally expensive |
+| **Deep learning on imagery** | Requires task-specific training; massive compute resources |
+
+**How MOSAIKS differs:**
+
+MOSAIKS provides a fundamentally different approach by computing **task-agnostic features once** and reusing them for any prediction task. This offers:
+
+1. **Universal features**: The same 4,000 random convolutional features predict temperature, income, population, forest cover, and dozens of other variables without retraining
+2. **Simplicity**: Uses basic ridge regression instead of deep neural networks—trainable on a laptop in seconds
+3. **Accessibility**: Pre-computed features available globally, democratizing satellite-based ML for researchers without GPU clusters
+4. **Scalability**: Adding new prediction tasks requires only new labels, not new feature extraction
+
+This work validates that MOSAIKS features capture sufficient climate-relevant signal to predict temperature with high accuracy, supporting their use for climate research in data-sparse regions.
+
 ## Method
 
 ### MOSAIKS Features
@@ -21,6 +45,29 @@ The key insight is that these random features capture enough spatial variation i
 
 - **MOSAIKS Features**: Pre-computed 0.25°×0.25° grid features from [mosaiks.org](https://mosaiks.org)
 - **Temperature**: NOAA weather station yearly averages (stations with >100 days recorded)
+
+### Dataset Scope
+
+| Metric | Value |
+|--------|-------|
+| **Total samples** | 1,709 US grid cells |
+| **Features per sample** | 4,000 MOSAIKS features + 2 coordinates (lat, lon) |
+| **Target variable** | Average yearly temperature (°C) |
+| **Train/test split** | 80/20 (1,367 train / 342 test) |
+| **Geographic coverage** | Continental United States |
+| **Spatial resolution** | 0.25° × 0.25° (~25 km × 25 km at mid-latitudes) |
+| **Imagery source** | Planet Labs satellite imagery (2019) |
+| **Temperature source** | NOAA weather stations (multi-year averages) |
+
+**Example data rows:**
+
+| lat | lon | X_0 | X_1 | ... | X_3999 | avg_temp_c |
+|-----|-----|-----|-----|-----|--------|------------|
+| 35.625 | -105.375 | 0.0234 | 0.0012 | ... | 0.0089 | 12.4 |
+| 40.125 | -88.875 | 0.0156 | 0.0098 | ... | 0.0145 | 10.8 |
+| 33.375 | -112.125 | 0.0312 | 0.0045 | ... | 0.0067 | 22.1 |
+
+Each MOSAIKS feature (X_0 through X_3999) represents the response of a random convolutional filter applied to the satellite image for that grid cell. Values are normalized and typically range from 0 to ~0.5.
 
 ### Pipeline
 
@@ -205,6 +252,49 @@ python-dotenv
 - **0.25° resolution**: ~25km grid cells still average out some local variation
 - **Station coverage**: Some grid cells have few weather stations
 - **Temporal mismatch**: 2019 imagery vs multi-year temperature averages
+
+## Discussion
+
+### Interpretation of Results
+
+The strong performance of MOSAIKS features (R² = 0.85) demonstrates that random convolutional features from satellite imagery encode substantial climate-relevant information. Notably, **explicit geographic coordinates provide no additional predictive power**—the MOSAIKS features already capture spatial patterns that correlate with temperature.
+
+This suggests the random filters are detecting visual signatures of climate zones: vegetation density and type (tropical vs temperate vs arid), urban heat island effects, snow/ice coverage, water body proximity, and elevation-correlated landscape features. The model succeeds not by "knowing" where locations are, but by recognizing what they look like.
+
+The failure of county-level aggregation (R² ≈ 0) versus success of grid-based aggregation (R² = 0.85) reveals an important finding: **administrative boundaries destroy spatial coherence**. Counties vary enormously in size and span multiple climate zones, whereas uniform grid cells preserve the local spatial relationships that MOSAIKS features capture.
+
+### Impact on the Field
+
+This work has several implications for climate and remote sensing research:
+
+1. **Validates MOSAIKS for climate variables**: Prior MOSAIKS work focused on socioeconomic outcomes (income, population). This demonstrates the features also capture physical/environmental signals, expanding their applicability to earth science.
+
+2. **Enables temperature estimation in data-sparse regions**: The model can predict temperature anywhere MOSAIKS features are available (global coverage), potentially filling gaps in weather station networks across Africa, South America, and Central Asia.
+
+3. **Provides a simple baseline**: Future work on satellite-based temperature prediction can benchmark against this ridge regression baseline before investing in more complex deep learning approaches.
+
+4. **Demonstrates resolution sensitivity**: The county vs. grid aggregation comparison provides a cautionary lesson for spatial ML—aggregation choices can make or break model performance.
+
+### Other Directions to Investigate
+
+Several extensions could build on this work:
+
+- **Temporal prediction**: Use multi-year MOSAIKS features to predict temperature trends or detect climate change signals
+- **Extreme events**: Predict temperature extremes (max/min) rather than yearly averages
+- **Higher resolution**: Test whether finer grid resolutions (0.1° or 0.05°) improve predictions in heterogeneous terrain
+- **Transfer learning**: Evaluate how well a US-trained model generalizes to other continents
+- **Feature importance**: Identify which of the 4,000 MOSAIKS features most strongly predict temperature and what visual patterns they correspond to
+- **Multi-task learning**: Jointly predict temperature with related variables (precipitation, humidity) to improve all predictions
+
+### Future Work
+
+Potential extensions of this project include:
+
+1. **Global validation**: Train and test on weather stations outside the US to assess cross-continental generalization
+2. **Seasonal predictions**: Extend to monthly or seasonal temperature prediction using temporal MOSAIKS features
+3. **Uncertainty quantification**: Add prediction intervals to communicate confidence in temperature estimates
+4. **Integration with climate models**: Use MOSAIKS predictions to downscale coarse climate model outputs
+5. **Operational deployment**: Build a web service that returns temperature estimates for any coordinate, enabling researchers to query predictions programmatically
 
 ## References
 
