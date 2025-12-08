@@ -299,5 +299,5 @@ Potential extensions of this project include:
 
 ## References
 
-- Rolf et al. (2021). "A generalizable and accessible approach to machine learning with global satellite imagery." *Nature Communications*.
-- MOSAIKS Project: https://mosaiks.org
+- Rolf et al. (2021). ["A generalizable and accessible approach to machine learning with global satellite imagery."](https://doi.org/10.1038/s41467-021-24638-z) *Nature Communications*, 12, 4392.
+- [MOSAIKS Project](https://mosaiks.org)
