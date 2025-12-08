@@ -1,3 +1,4 @@
-theme: jekyll-theme-minimal
+remote_theme: just-the-docs/just-the-docs
 title: MOSAIKS Temperature Prediction
 description: Predicting temperature from satellite imagery using MOSAIKS features
+color_scheme: dark
