@@ -4,3 +4,4 @@ __pycache__/
 .env
 data/*
 !data/us_grid_025deg.csv
+.txt
