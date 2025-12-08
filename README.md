@@ -1,5 +1,8 @@
 # MOSAIKS Temperature Prediction
 
+![Satellite imagery of aquaculture development in Andhra Pradesh, India](https://news.berkeley.edu/wp-content/uploads/2021/07/satellite_image_india_aquaculture_edit2.jpg)
+<sub>*Satellite imagery example: Aquaculture in Andhra Pradesh, India. Credit: NASA Earth Observatory / Joshua Stevens, using Landsat data from USGS*</sub>
+
 Predicting average yearly temperature from satellite imagery features using the MOSAIKS (Multi-task Observation using Satellite Imagery & Kitchen Sinks) approach.
 
 ## Overview
