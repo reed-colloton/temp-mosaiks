@@ -43,7 +43,7 @@ The key insight is that these random features capture enough spatial variation i
 
 ### Data Sources
 
-- **MOSAIKS Features**: Pre-computed 0.25°×0.25° grid features from [mosaiks.org](https://mosaiks.org)
+- **MOSAIKS Features**: 0.25°×0.25° grid features recomputed by [Esther Rolf](https://www.estherrolf.com/) specifically for this project
 - **Temperature**: NOAA weather station yearly averages (stations with >100 days recorded)
 
 ### Dataset Scope
@@ -296,7 +296,11 @@ Potential extensions of this project include:
 4. **Integration with climate models**: Use MOSAIKS predictions to downscale coarse climate model outputs
 5. **Operational deployment**: Build a web service that returns temperature estimates for any coordinate, enabling researchers to query predictions programmatically
 
+## Acknowledgments
+
+Special thanks to [Esther Rolf](https://www.estherrolf.com/) for recomputing the MOSAIKS features at 0.25° resolution used in this project. Dr. Rolf is a lead author of the original MOSAIKS paper and her work made this analysis possible.
+
 ## References
 
-- Rolf et al. (2021). "A generalizable and accessible approach to machine learning with global satellite imagery." *Nature Communications*.
+- Rolf, E., Proctor, J., Carleton, T., Bolliger, I., Shankar, V., Ishihara, M., Recht, B., & Hsiang, S. (2021). "A generalizable and accessible approach to machine learning with global satellite imagery." *Nature Communications*, 12, 4392. https://doi.org/10.1038/s41467-021-24638-z
 - MOSAIKS Project: https://mosaiks.org
