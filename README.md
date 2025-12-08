@@ -347,7 +347,7 @@ Potential extensions of this project include:
 
 ## Authors
 
-[Reed Colloton](https://reedcolloton.com/about) and Nolan Hofle, undergraduate students at CU Boulder majoring in Computer Science.
+[Reed Colloton](https://reedcolloton.com/about) and [Nolan Hofle](https://www.linkedin.com/in/nolan-hofle-4176ba347/), undergraduate students at CU Boulder majoring in Computer Science.
 
 ## References
 
